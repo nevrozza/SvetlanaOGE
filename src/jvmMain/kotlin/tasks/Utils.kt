@@ -8,6 +8,11 @@ object CColors {
     val blueColor = Color(37, 110, 173)
 }
 
+object Timings {
+    const val preparation = 90
+    const val answering = 125
+    const val questions = 45
+}
 
 object Titles {
     const val text = "Task 1. You are going to read the text aloud. You have 1.5 minutes to read text " +

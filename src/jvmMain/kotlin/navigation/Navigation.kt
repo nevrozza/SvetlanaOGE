@@ -33,8 +33,8 @@ fun RootComposeBuilder.generateGraph() {
         }
 
         screen(NavigationTree.Exam.Start.name) {it as Exam
-            Box(modifier = Modifier.fillMaxSize().padding(20.dp)) {
+
                 ExamScreen(it)
-            }
+
         }
 }

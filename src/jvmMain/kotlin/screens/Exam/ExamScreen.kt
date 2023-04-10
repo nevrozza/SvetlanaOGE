@@ -7,48 +7,34 @@ import androidx.compose.runtime.remember
 import com.adeo.kviewmodel.compose.observeAsState
 
 import com.adeo.kviewmodel.odyssey.StoredViewModel
+import navigation.NavigationTree
+import ru.alexgladkov.odyssey.compose.extensions.deepLink
+import ru.alexgladkov.odyssey.compose.extensions.present
+import ru.alexgladkov.odyssey.compose.extensions.push
+import ru.alexgladkov.odyssey.compose.extensions.pushDeepLink
 import ru.alexgladkov.odyssey.compose.local.LocalRootController
+import ru.alexgladkov.odyssey.core.LaunchFlag
+import screens.Exam.models.ExamAction
 import screens.Exam.models.ExamEvent
+import screens.Exam.models.ExamViewState
 import tasks.Exam
 import tasks.TasksID
+import tasks.Timings
 import tasks.Titles
 
 @Composable
 fun ExamScreen(exam: Exam) {
     val rootController = LocalRootController.current
 
-
-    val initialTaskId = remember { exam.taskId }
-    val initialTaskText = remember { exam.variant[initialTaskId] }
-
-
-    val initialTitle: String
-    val initialTaskNumber: Int
-
-    when (exam.taskId) {
-        TasksID.text -> {
-            initialTitle = remember { Titles.text }; initialTaskNumber = remember { 1 }
-        }
-
-        TasksID.monolog -> {
-            initialTitle = remember { Titles.monolog }; initialTaskNumber = remember { 3 }
-        }
-
-        else -> {
-            initialTitle = remember { Titles.qa }; initialTaskNumber = remember { 2 }
-        }
-    }
-
-
-
-
+    val init = changeExam(exam)
     StoredViewModel(factory = {
         ExamViewModel(
-            exam.variant,
-            initialTaskId,
-            initialTitle,
-            initialTaskText,
-            initialTaskNumber
+            init.tasks,
+            init.taskId,
+            init.title,
+            init.taskText,
+            init.taskNumber,
+            init.seconds
         )
     }) { viewModel ->
         val state = viewModel.viewStates().observeAsState()
@@ -62,7 +48,7 @@ fun ExamScreen(exam: Exam) {
 
 
         when (action.value) {
-
+            ExamAction.GoHome -> rootController.present(NavigationTree.Splash.SplashScreen.name, launchFlag = LaunchFlag.SingleNewTask)
             else -> {}
         }
 

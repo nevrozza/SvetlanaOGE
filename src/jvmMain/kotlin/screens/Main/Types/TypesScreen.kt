@@ -21,7 +21,7 @@ fun TypesScreen() {
     StoredViewModel(factory = { TypesViewModel() }) { viewModel ->
         val state = viewModel.viewStates().observeAsState()
         val action = viewModel.viewActions().observeAsState()
-        println("types")
+
 
 
         TypesView(state = state.value) { event ->
@@ -31,21 +31,14 @@ fun TypesScreen() {
 
 
         when (action.value) {
-            is TypesAction.TypesOpen -> {
-                rootController.push(
-                    NavigationTree.Main.VariantsScreen.name,
-                    state.value.id
-                )
-            }
+            is TypesAction.TypesOpen -> { rootController.push(NavigationTree.Main.VariantsScreen.name, state.value.id); viewModel.obtainEvent(TypesEvent.ActionInvoked) }
 
             else -> {}
         }
     
 
 
-//
-//        ; viewModel.obtainEvent(
-//        TypesEvent.ActionInvoked)
+
 
 
     }
