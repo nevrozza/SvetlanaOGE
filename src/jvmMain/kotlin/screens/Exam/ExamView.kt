@@ -1,16 +1,15 @@
 package screens.Exam
 
-import CustomButton
+import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -26,6 +25,7 @@ import screens.Exam.models.ExamViewState
 import tasks.CColors
 import tasks.TasksID
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun ExamView(state: ExamViewState, eventHandler: (ExamEvent) -> Unit) {
     val percent = state.initialSeconds / 100f
@@ -38,13 +38,13 @@ fun ExamView(state: ExamViewState, eventHandler: (ExamEvent) -> Unit) {
     var text: String = remember { "" }
 
     when (state.taskId) {
-        TasksID.text -> text = state.taskText
+        TasksID.text -> text = state.taskText.replace("\n", " ")
         in TasksID.qa until TasksID.monolog -> {
             if (!state.isFullQA) {
                 for (i in TasksID.qa..state.taskId) {
                     text += "${i}. ${state.tasks[i]}\n"
                 }
-            } else if (state.seconds > 38) text = state.taskText else text = ""
+            } else if (state.seconds > 40) text = state.taskText else text = ""
         }
 
         TasksID.monolog -> {
@@ -55,106 +55,141 @@ fun ExamView(state: ExamViewState, eventHandler: (ExamEvent) -> Unit) {
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Card(
-                    modifier = Modifier.size(48.dp),
-                    shape = CircleShape,
-                    colors = CardDefaults.cardColors(containerColor = CColors.blueColor)
-                ) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(text = state.taskNumber.toString(), color = Color.White, fontSize = 27.sp)
+    Box(
+        modifier = Modifier.fillMaxSize()
+            .background(color = Color.LightGray.copy(alpha = if (state.isPause) 1f else 0f)),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Card(
+                        modifier = Modifier.size(48.dp),
+                        shape = CircleShape,
+                        colors = CardDefaults.cardColors(containerColor = CColors.blueColor)
+                    ) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text(text = state.taskNumber.toString(), color = Color.White, fontSize = 27.sp)
+                        }
                     }
+                    Spacer(modifier = Modifier.width(15.dp))
+                    Text(state.title, fontSize = 39.sp)
                 }
-                Spacer(modifier = Modifier.width(15.dp))
-                Text(state.title, fontSize = 27.sp)
+
+                Divider(
+                    modifier = Modifier.padding(top = 10.dp, bottom = 5.dp).fillMaxWidth().height(2.dp),
+                    color = Color.LightGray
+                )
+
             }
-
-            Divider(
-                modifier = Modifier.padding(top = 10.dp, bottom = 10.dp).fillMaxWidth().height(2.dp),
-                color = Color.LightGray
-            )
-
-        }
-        val checkUsl = state.isFullQA && state.taskId in TasksID.qa until TasksID.monolog
-        Box(
-            modifier = if (checkUsl) Modifier.height(700.dp).fillMaxWidth() else Modifier.padding(20.dp),
-            contentAlignment = if (checkUsl) Alignment.Center else Alignment.TopStart
-        ) {
-            Text(text, fontSize = 40.sp)
-        }
-
-        Row(
-            modifier = Modifier.fillMaxSize(),
-            verticalAlignment = Alignment.Bottom,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            if(state.taskId != TasksID.text) {
-                IconButton(onClick = { eventHandler.invoke(ExamEvent.BackClicked) }) {
-                    Icon(Icons.Default.KeyboardArrowLeft, contentDescription = null)
-                }
-            }
-
-            IconButton(onClick = { eventHandler.invoke(ExamEvent.HomeClicked) }) {
-                Icon(Icons.Default.Home, contentDescription = null)
+            val checkUsl = state.isFullQA && state.taskId in TasksID.qa until TasksID.monolog
+            Box(
+                modifier = if (checkUsl) Modifier.height(700.dp).fillMaxWidth().padding(top = 30.dp) else Modifier.padding(horizontal = 20.dp),
+                contentAlignment = if (checkUsl) Alignment.Center else Alignment.TopStart
+            ) {
+                Text(text, fontSize = 40.sp)
             }
 
             Row(
-                modifier = Modifier.fillMaxWidth().height(50.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
+                modifier = Modifier.fillMaxSize(),
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Box(contentAlignment = Alignment.Center, modifier = Modifier.size(40.dp)) {
-                    if (state.taskId in TasksID.qa until TasksID.monolog) {
-                        if (!state.isFullQA) {
+                Row(Modifier.width(130.dp)) {
+                    AnimatedVisibility(state.taskId != TasksID.text) {
+                        IconButton(onClick = { eventHandler.invoke(ExamEvent.BackClicked) }) {
+                            Icon(Icons.Filled.KeyboardArrowLeft, contentDescription = null)
+                        }
+                    }
+                    IconButton(onClick = { eventHandler.invoke(ExamEvent.HomeClicked) }) {
+                        Icon(Icons.Filled.Home, contentDescription = null)
+                    }
+                    Box(contentAlignment = Alignment.Center) {
+                        IconButton(onClick = { eventHandler.invoke(ExamEvent.SoundClicked) }) {
+                            Icon(Icons.Filled.Notifications, contentDescription = null)
+                        }
+                        androidx.compose.animation.AnimatedVisibility(!state.isSound, enter = fadeIn(), exit = fadeOut()) {
                             Text(
                                 "/",
-                                modifier = Modifier.padding(bottom = 6.dp),
+                                modifier = Modifier.padding(bottom = 6.dp).align(Alignment.Center),
                                 fontSize = 20.sp,
-                                color = Color.Black
+                                color = Color.White,
                             )
                         }
-                        IconButton(onClick = { eventHandler.invoke(ExamEvent.FullQAClicked) }) {
-                            Icon(Icons.Default.Search, contentDescription = null)
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Box(Modifier.width(40.dp)) {
+                        androidx.compose.animation.AnimatedVisibility(
+                            state.taskId in TasksID.qa until TasksID.monolog,
+                            enter = fadeIn() + expandVertically(expandFrom = Alignment.Top),
+                            exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Top)
+                        ) {
+                            Box(Modifier.size(40.dp), contentAlignment = Alignment.Center) {
+                                androidx.compose.animation.AnimatedVisibility(!state.isFullQA, enter = fadeIn(), exit = fadeOut()) {
+                                    Text(
+                                        "/",
+                                        modifier = Modifier.padding(bottom = 6.dp).align(Alignment.Center),
+                                        fontSize = 20.sp,
+                                        color = Color.Black,
+                                    )
+                                }
+                                IconButton(onClick = { eventHandler.invoke(ExamEvent.FullQAClicked) }) {
+                                    Icon(Icons.Filled.Search, contentDescription = null)
+                                }
+                            }
+                        }
+                    }
+                    AnimatedContent(state.timerText){
+                        Text(
+                            it,
+                            color = Color.Black,
+                            fontSize = 20.sp,
+                            modifier = Modifier.padding(horizontal = 6.dp).width(110.dp),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+
+                    Row(
+                        modifier = Modifier.height(35.dp).padding(top = 2.dp).clip(RoundedCornerShape(20))
+                            .clickable() { eventHandler.invoke(ExamEvent.StopClicked) }, verticalAlignment = Alignment.CenterVertically) {
+                        LinearProgressIndicator(
+                            progress = animatedProgress.value,
+                            modifier = Modifier
+                                .height(25.dp)
+                                .padding(horizontal = 6.dp)
+                                .width(1500.dp)
+                                .clip(AbsoluteRoundedCornerShape(20)),
+                            color = CColors.blueColor
+                        )
+
+                        Text(
+                            "0$minutesF:${if (secondsF == 0) "00" else if (secondsF < 10) "0$secondsF" else secondsF}",
+                            modifier = Modifier.width(60.dp),
+                            color = Color.Black,
+                            fontSize = 20.sp,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                    Row(Modifier.width(40.dp)) {
+                        AnimatedVisibility(
+                            !(state.taskId == TasksID.monolog && state.timerText == "Answering"),
+                            enter = fadeIn() + expandVertically(expandFrom = Alignment.Top),
+                            exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Top)
+                        ) {
+                            IconButton(onClick = { eventHandler.invoke(ExamEvent.Skip) }) {
+                                Icon(Icons.Filled.KeyboardArrowRight, contentDescription = null)
+                            }
                         }
                     }
                 }
 
-                Text(
-                    state.timerText,
-                    color = Color.Black,
-                    fontSize = 20.sp,
-                    modifier = Modifier.padding(horizontal = 6.dp).width(110.dp),
-                    textAlign = TextAlign.Center
-                )
-                Row(modifier = Modifier.padding(top = 2.dp).clip(RoundedCornerShape(20)).clickable() { eventHandler.invoke(ExamEvent.StopClicked) }) {
-                    LinearProgressIndicator(
-                        progress = animatedProgress.value,
-                        modifier = Modifier
-                            .height(25.dp)
-                            .padding(horizontal = 6.dp)
-                            .width(800.dp)
-                            .clip(AbsoluteRoundedCornerShape(20)),
-                        color = CColors.blueColor
-                    )
-
-                    Text(
-                        "0$minutesF:${if (secondsF == 0) "00" else if (secondsF < 10) "0$secondsF" else secondsF}",
-                        modifier = Modifier.width(60.dp),
-                        color = Color.Black,
-                        fontSize = 20.sp,
-                        textAlign = TextAlign.Center
-                    )
-                }
-                if(state.taskId != TasksID.monolog) {
-                    IconButton(onClick = { eventHandler.invoke(ExamEvent.Skip) }) {
-                        Icon(Icons.Default.KeyboardArrowRight, contentDescription = null)
-                    }
-                }
             }
-
-
 
         }
 

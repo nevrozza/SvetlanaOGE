@@ -13,10 +13,15 @@ class VariantsViewModel: BaseSharedViewModel<VariantsViewState, VariantsAction, 
             is VariantsEvent.VariantClicked -> openVariant(viewEvent.variant)
             is VariantsEvent.ActionInvoked -> viewAction = null
             is VariantsEvent.BackPressed -> backPressed()
+            is VariantsEvent.ViewInited -> viewInited()
         }
+    }
+    private fun viewInited() {
+        viewState = viewState.copy(isInited = true)
     }
     private fun backPressed() {
         viewAction = VariantsAction.Back
+        viewState = viewState.copy(isInited = false)
     }
     private fun openVariant(variant: List<String>) {
         viewState = viewState.copy(variant = variant)

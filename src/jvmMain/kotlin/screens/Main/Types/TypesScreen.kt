@@ -1,19 +1,13 @@
 package screens.Main.Types
 
-import CustomButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import com.adeo.kviewmodel.compose.observeAsState
 import com.adeo.kviewmodel.odyssey.StoredViewModel
 import navigation.NavigationTree
-import ru.alexgladkov.odyssey.compose.extensions.present
-import ru.alexgladkov.odyssey.compose.extensions.push
 import ru.alexgladkov.odyssey.compose.local.LocalRootController
+import ru.alexgladkov.odyssey.core.animations.AnimationType
 import screens.Main.Types.models.TypesAction
 import screens.Main.Types.models.TypesEvent
-import screens.Main.Types.models.TypesViewState
-
 @Composable
 fun TypesScreen() {
     val rootController = LocalRootController.current
@@ -31,7 +25,11 @@ fun TypesScreen() {
 
 
         when (action.value) {
-            is TypesAction.TypesOpen -> { rootController.push(NavigationTree.Main.VariantsScreen.name, state.value.id); viewModel.obtainEvent(TypesEvent.ActionInvoked) }
+            is TypesAction.TypesOpen -> {
+                rootController.launch(
+                    screen = NavigationTree.Main.VariantsScreen.name,
+                    params = state.value.id,
+                    animationType = AnimationType.Fade(300)); viewModel.obtainEvent(TypesEvent.ActionInvoked) }
 
             else -> {}
         }

@@ -7,4 +7,5 @@ sealed class ExamEvent {
     object BackClicked: ExamEvent()
     object FullQAClicked: ExamEvent()
     object HomeClicked: ExamEvent()
+    object SoundClicked: ExamEvent()
 }
